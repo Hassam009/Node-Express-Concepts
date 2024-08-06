@@ -8,6 +8,10 @@ const userSchema=mongoose.Schema({
 username:String,
 name:String,
 age:Number,
+categories:{
+    type:Array,
+    default:[]
+}
 })
 
 module.exports=mongoose.model("user", userSchema);
