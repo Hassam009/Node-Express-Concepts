@@ -37,6 +37,7 @@ router.get("/allUsers", async function(req,res){
   //To FIND SPECIFIC USERNAME
   // let allUsers=await userModel.findOne({username:"Asad"});
   // TO MAKE INSENSTIVI WE WILL USE RegExp 
+  // var Regex= new RegExp("^hassam&", "i")
   let allUsers=await userModel.find();
 
   res.send(allUsers);
