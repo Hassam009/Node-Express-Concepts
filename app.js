@@ -7,6 +7,7 @@ var session= require('express-session')
 var flash=require('connect-flash');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+const passport = require('passport');
 var app = express();
 
 // view engine setup
@@ -18,6 +19,11 @@ app.use(session({
   saveUninitialized:false,
   secret:"hassamisadeveloperwhoisstrugglingtoearnmoneyfromfreelancing"
 }))
+app.use(passport.initialize());
+app.use(passport.session());
+passport.serializeUser(usersRouter.serializeUser());
+passport.deserializeUser(usersRouter.deserializeUser());
+
 app.use(flash())
 app.use(logger('dev'));
 app.use(express.json());
