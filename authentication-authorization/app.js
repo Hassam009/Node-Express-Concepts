@@ -18,14 +18,14 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-// TO CREATE USER WITH MONGODB
+// Create User with MongoDB
 app.post("/create", async (req, res) => {
   try {
     let { username, email, password, age } = req.body;
     let user = await userModel.findOne({ email });
     if (user) return res.status(400).send("User already registered");
 
-    // Hashing password
+    // Hashing the password
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(password, salt, async (err, hash) => {
         let createdUser = await userModel.create({
@@ -35,6 +35,7 @@ app.post("/create", async (req, res) => {
           age,
         });
 
+        // Generate JWT token
         let token = jwt.sign(
           { email: createdUser.email, userId: createdUser._id },
           "sdhkfsdf"
@@ -48,10 +49,25 @@ app.post("/create", async (req, res) => {
   }
 });
 
+// Render login page
 app.get("/login", (req, res) => {
   res.render("login");
 });
 
+// Render profile page (if logged in)
+app.get("/profile", isLoggedIn, async (req, res) => {
+  try {
+    let user = await userModel.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("User not found");
+
+    console.log(user); // Add this to check what the `user` object contains
+    res.render("profile", { user }); // Pass the full `user` object
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
+
+// User login
 app.post("/login", async (req, res) => {
   try {
     let user = await userModel.findOne({ email: req.body.email });
@@ -59,9 +75,9 @@ app.post("/login", async (req, res) => {
 
     bcrypt.compare(req.body.password, user.password, (err, result) => {
       if (result) {
-        let token = jwt.sign({ user: user.email }, "sdhkfsdf");
+        let token = jwt.sign({ email: user.email }, "sdhkfsdf");
         res.cookie("token", token);
-        res.send("Yes, you can log in");
+        res.redirect("profile");
       } else {
         res.status(400).send("Incorrect password");
       }
@@ -71,10 +87,26 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// Logout route
 app.get("/logout", (req, res) => {
-  res.cookie("token", "");
+  res.cookie("token", ""); // Clear the token by setting it to an empty string
   res.redirect("/login");
 });
+
+// Middleware to check if user is logged in
+function isLoggedIn(req, res, next) {
+  // Access cookie using req.cookies instead of req.cookie
+  if (!req.cookies.token) return res.redirect("/login");
+
+  try {
+    // Verify JWT token
+    let data = jwt.verify(req.cookies.token, "sdhkfsdf");
+    req.user = data; // Attach decoded token data (user info) to the request object
+    next();
+  } catch (err) {
+    return res.status(403).send("Invalid or expired token");
+  }
+}
 
 app.listen(3000, function () {
   console.log("Server is running on port 3000");
