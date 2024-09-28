@@ -57,11 +57,32 @@ app.get("/login", (req, res) => {
 // Render profile page (if logged in)
 app.get("/profile", isLoggedIn, async (req, res) => {
   try {
-    let user = await userModel.findOne({ email: req.user.email });
+    let user = await userModel.findOne({ email: req.user.email }).populate("posts");
     if (!user) return res.status(404).send("User not found");
 
     console.log(user); // Add this to check what the `user` object contains
     res.render("profile", { user }); // Pass the full `user` object
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
+
+//To create Post
+// Create Post
+// To create Post
+app.post("/post", isLoggedIn, async (req, res) => {
+  try {
+    let user = await userModel.findOne({ email: req.user.email });
+    let { content } = req.body;
+
+    let post = await postModel.create({
+      user: user._id,
+      content,
+    });
+
+    user.posts.push(post._id);
+    await user.save();
+    res.redirect("/profile");
   } catch (error) {
     res.status(500).send("Server Error");
   }
